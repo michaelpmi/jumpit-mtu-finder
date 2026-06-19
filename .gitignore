@@ -1,0 +1,10 @@
+# Build output (regenerate with ./build.sh)
+*.app/
+
+# Icon intermediates (regenerate with icon/build_icns.sh)
+icon/AppIcon.iconset/
+icon/icon_master_1024.png
+icon/appicon_svg_1024.png
+
+# macOS
+.DS_Store
