@@ -19,13 +19,22 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
 /// Global language state + string lookup. `override == nil` follows the system language.
 /// Mutating `override` before a SwiftUI re-render makes every `L(...)` return fresh strings.
+/// Access is lock-guarded so a stray lookup off the main thread can't data-race.
 enum Lang {
     static let storageKey = "appLanguage"
-    static var override: String? = nil
 
-    /// Apply a persisted/selected raw value ("system" or a locale code).
+    private static let lock = NSLock()
+    private static var _override: String?
+
+    static var override: String? {
+        get { lock.lock(); defer { lock.unlock() }; return _override }
+        set { lock.lock(); defer { lock.unlock() }; _override = newValue }
+    }
+
+    /// Apply a persisted/selected raw value; anything unknown falls back to system.
     static func apply(_ raw: String) {
-        override = (raw == AppLanguage.system.rawValue) ? nil : raw
+        let lang = AppLanguage(rawValue: raw) ?? .system
+        override = (lang == .system) ? nil : lang.rawValue
     }
 
     static func bundle() -> Bundle {

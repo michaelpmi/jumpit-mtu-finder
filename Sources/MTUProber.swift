@@ -41,6 +41,13 @@ enum PingOutcome {
     case error         // deterministic failure: no route, DNS, bad/invalid interface
 }
 
+/// Result of probing one MTU value during the search.
+enum ProbeVerdict {
+    case fits          // payload went through
+    case doesNotFit    // too large / no reply → shrink the search
+    case failed        // deterministic error (route/DNS/interface) → abort the measurement
+}
+
 /// Thread-safe holder so a Task cancellation can terminate the in-flight ping process.
 final class ProcessBox: @unchecked Sendable {
     private let lock = NSLock()
@@ -141,6 +148,10 @@ final class MTUProber: ObservableObject {
         isRunning = true
         status = .starting(host: target)
 
+        // Re-read interfaces so a bound interface's ceiling reflects the current MTU
+        // (and a binding to a now-gone interface is dropped).
+        refreshInterfaces()
+
         // Upper bound = MTU of the interface the probes actually use. With DF set,
         // a payload above the local interface MTU can only return "Message too long",
         // so the interface MTU is the real ceiling (bound interface if set, else default).
@@ -194,16 +205,20 @@ final class MTUProber: ObservableObject {
         var hi = hiMTU
 
         // ensure lo fits; if even 576 fails on the path, walk down toward baseline
-        if await probeMTU(host: host, mtu: lo) == false {
+        switch await probeMTU(host: host, mtu: lo) {
+        case .failed: failDuringSearch(host: host); return
+        case .doesNotFit:
             // path can't even do 576 — fall back to whatever the baseline payload implies
             status = .pathTooSmall(mtu: lo)
             lo = 64 + kIPICMPOverhead
+        case .fits: break
         }
         if Task.isCancelled { status = .cancelled; return }
 
-        if await probeMTU(host: host, mtu: hi) {
-            finish(best: hi, host: host)
-            return
+        switch await probeMTU(host: host, mtu: hi) {
+        case .failed: failDuringSearch(host: host); return
+        case .fits:   finish(best: hi, host: host); return
+        case .doesNotFit: break
         }
         if Task.isCancelled { status = .cancelled; return }
 
@@ -212,11 +227,10 @@ final class MTUProber: ObservableObject {
         while lo <= hi {
             if Task.isCancelled { status = .cancelled; return }
             let mid = (lo + hi) / 2
-            if await probeMTU(host: host, mtu: mid) {
-                best = mid
-                lo = mid + 1
-            } else {
-                hi = mid - 1
+            switch await probeMTU(host: host, mtu: mid) {
+            case .failed: failDuringSearch(host: host); return
+            case .fits:   best = mid; lo = mid + 1
+            case .doesNotFit: hi = mid - 1
             }
         }
         finish(best: best, host: host)
@@ -227,8 +241,8 @@ final class MTUProber: ObservableObject {
         status = .done(host: host, mtu: best)
     }
 
-    /// Probe a full MTU value (converts to ICMP payload). Returns true if it fits.
-    private func probeMTU(host: String, mtu: Int) async -> Bool {
+    /// Probe a full MTU value (converts to ICMP payload).
+    private func probeMTU(host: String, mtu: Int) async -> ProbeVerdict {
         let payload = max(0, mtu - kIPICMPOverhead)
         currentMTU = mtu
         status = .testing(mtu: mtu, payload: payload)
@@ -237,15 +251,29 @@ final class MTUProber: ObservableObject {
         // retry only on no-reply (could be packet loss); "too long" is deterministic.
         var retries = 0
         while outcome == .noReply && retries < 2 {
-            if Task.isCancelled { return false }
+            if Task.isCancelled { return .doesNotFit }
             retries += 1
             outcome = await probe(host: host, payload: payload)
         }
 
-        let fits = (outcome == .ok)
         probeCount += 1
-        log.insert(ProbeLogEntry(mtu: mtu, payload: payload, fits: fits, outcome: outcome), at: 0)
-        return fits
+        log.insert(ProbeLogEntry(mtu: mtu, payload: payload, fits: outcome == .ok, outcome: outcome), at: 0)
+
+        switch outcome {
+        case .ok:                return .fits
+        case .tooLong, .noReply: return .doesNotFit
+        case .error:             return .failed   // deterministic — must not feed the search
+        }
+    }
+
+    /// A deterministic probe error mid-measurement → surface it instead of returning a bogus low MTU.
+    private func failDuringSearch(host: String) {
+        if let b = boundInterface {
+            error = .boundUnreachable(host: host, iface: b)
+        } else {
+            error = .resolve(host: host)
+        }
+        status = .noAnswer
     }
 
     /// Run a single ping with the don't-fragment bit set, optionally bound to an interface.
