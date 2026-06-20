@@ -1,0 +1,85 @@
+/* Header */
+"app.tagline" = "Finds the largest fragmentation-free packet size";
+"lang.label" = "Language";
+
+/* Input */
+"input.target" = "Target";
+"input.host_placeholder" = "Host or IP (e.g. gateway, 1.1.1.1, server.example.com)";
+"input.gateway" = "Gateway";
+"input.gateway_help" = "Use this Mac's default gateway";
+"input.conn_type" = "Connection type";
+"mode.auto" = "Automatic";
+"mode.direct" = "Direct (no VPN)";
+"mode.vpn" = "Over VPN";
+"mode.auto.hint" = "Rates the measured MTU automatically by typical ranges.";
+"mode.direct.hint" = "Without a tunnel, expect 1500 (Ethernet) or 1492 (PPPoE/DSL).";
+"mode.vpn.hint" = "Inside a tunnel a reduced MTU is normal — shows overhead & protocol hint.";
+"input.jumbo" = "Test jumbo frames (up to MTU 9000)";
+"input.jumbo_help" = "Only useful on a LAN with jumbo-capable switches/NICs";
+"adv.title" = "Advanced: interface binding";
+"adv.auto_routing" = "Automatic (routing)";
+"adv.hint" = "Binds the pings to a fixed interface (ping -b) — e.g. to measure specifically through a tunnel (utunX) instead of the default routing. The target must be reachable via this interface.";
+"adv.refresh" = "Refresh interfaces";
+"iface.tunnel" = "Tunnel";
+"info.bound_to" = "bound to %@";
+"info.local_mtu" = "local MTU %lld";
+"btn.cancel" = "Cancel";
+"btn.measure" = "Find MTU";
+
+/* Status */
+"status.ready" = "Ready.";
+"status.starting" = "Starting measurement to %@ …";
+"status.checking" = "Checking reachability of %@ …";
+"status.testing" = "Testing MTU %1$lld (payload %2$lld B) …";
+"status.path_too_small" = "Path can't even carry MTU %lld — very small MTU.";
+"status.cancelled" = "Cancelled.";
+"status.done" = "Done — optimal MTU for %1$@: %2$lld.";
+"status.no_answer" = "No answer.";
+
+/* Errors */
+"error.empty_host" = "Please enter a target host.";
+"error.bound_unreachable" = "%1$@ is not reachable via interface %2$@. That interface probably doesn't route to this target — pick another target or set the interface to Automatic.";
+"error.resolve" = "%@ could not be resolved or reached (DNS or routing error). Check the name/IP.";
+"error.icmp_blocked" = "%@ doesn't answer ICMP (even small packets don't get through). The host may block ping or be unreachable.";
+
+/* Result */
+"result.title" = "Optimal MTU";
+"result.bytes" = "bytes";
+"result.payload_header" = "Payload %lld + 28 header";
+"result.probes" = "Probes";
+"result.tunnel_overhead" = "Tunnel overhead";
+"result.set_with" = "Set with";
+"result.empty" = "No measurement yet. Choose a target and press Find MTU.";
+"overhead.value" = "%1$lld B vs. 1500  —  %2$@";
+"proto.none" = "no overhead (traffic may not be in the tunnel)";
+"proto.pppoe" = "PPPoE/DSL (8 B)";
+"proto.gre" = "GRE / IP-in-IP";
+"proto.l2tp" = "L2TP / IPsec (transport)";
+"proto.wg4" = "WireGuard over IPv4 (60 B) or OpenVPN";
+"proto.wg6" = "WireGuard over IPv6 (80 B)";
+"proto.ipsec" = "IPsec ESP or nested tunnels";
+"proto.unknown" = "unusually high overhead — check the path";
+"rec.vpn" = "WireGuard:  MTU = %1$lld   (in [Interface])\nelse:       sudo ifconfig <utunX> mtu %2$lld";
+"rec.default" = "sudo networksetup -setMTU <service> %lld";
+
+/* Verdict */
+"verdict.ethernet" = "Ethernet standard — full throughput, no fragmentation.";
+"verdict.pppoe" = "Typical for PPPoE/DSL. Optimal for this line.";
+"verdict.auto.reduced" = "Reduced — usually a tunnel/VPN (e.g. WireGuard, IPsec, PPPoE overhead).";
+"verdict.auto.low" = "Low — nested tunnels or a conservative VPN.";
+"verdict.auto.verylow" = "Very low — unusual, check the path.";
+"verdict.direct.reduced" = "Lower than expected without VPN — a tunnel or throttling in the path?";
+"verdict.direct.verylow" = "Very low for a direct connection — check the path.";
+"verdict.vpn.high" = "Unusually high for VPN — is the traffic really going through the tunnel?";
+"verdict.vpn.normal" = "Normal for VPN. Optimal tunnel value for this connection.";
+"verdict.vpn.conservative" = "Conservative tunnel — works, but loses a little throughput.";
+"verdict.vpn.verylow" = "Very low — nested tunnels? Check the path.";
+
+/* Log */
+"log.title" = "Probes";
+"log.mtu" = "MTU %lld";
+"log.payload" = "%lld B payload";
+"log.ok" = "reply received";
+"log.toolong" = "local interface too small";
+"log.noreply" = "no reply / fragmentation needed";
+"log.error" = "error (route/DNS/interface)";

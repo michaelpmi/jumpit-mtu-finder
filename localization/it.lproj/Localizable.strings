@@ -1,0 +1,85 @@
+/* Header */
+"app.tagline" = "Trova la massima dimensione di pacchetto senza frammentazione";
+"lang.label" = "Lingua";
+
+/* Input */
+"input.target" = "Destinazione";
+"input.host_placeholder" = "Host o IP (es. gateway, 1.1.1.1, server.example.com)";
+"input.gateway" = "Gateway";
+"input.gateway_help" = "Usa il gateway predefinito di questo Mac";
+"input.conn_type" = "Tipo di connessione";
+"mode.auto" = "Automatico";
+"mode.direct" = "Diretto (senza VPN)";
+"mode.vpn" = "Tramite VPN";
+"mode.auto.hint" = "Valuta la MTU misurata automaticamente in base agli intervalli tipici.";
+"mode.direct.hint" = "Senza tunnel ci si aspetta: 1500 (Ethernet) o 1492 (PPPoE/DSL).";
+"mode.vpn.hint" = "In un tunnel una MTU ridotta è normale — mostra l'overhead e il protocollo.";
+"input.jumbo" = "Testa i jumbo frame (fino a MTU 9000)";
+"input.jumbo_help" = "Utile solo su una LAN con switch/NIC compatibili con jumbo";
+"adv.title" = "Avanzate: binding dell'interfaccia";
+"adv.auto_routing" = "Automatico (routing)";
+"adv.hint" = "Vincola i ping a un'interfaccia fissa (ping -b) — es. per misurare specificamente attraverso un tunnel (utunX) invece del routing standard. La destinazione deve essere raggiungibile tramite questa interfaccia.";
+"adv.refresh" = "Aggiorna interfacce";
+"iface.tunnel" = "Tunnel";
+"info.bound_to" = "vincolato a %@";
+"info.local_mtu" = "MTU locale %lld";
+"btn.cancel" = "Annulla";
+"btn.measure" = "Calcola MTU";
+
+/* Status */
+"status.ready" = "Pronto.";
+"status.starting" = "Avvio della misurazione verso %@ …";
+"status.checking" = "Verifica della raggiungibilità di %@ …";
+"status.testing" = "Test MTU %1$lld (payload %2$lld B) …";
+"status.path_too_small" = "Il percorso non supporta nemmeno la MTU %lld — MTU molto piccola.";
+"status.cancelled" = "Annullato.";
+"status.done" = "Fatto — MTU ottimale per %1$@: %2$lld.";
+"status.no_answer" = "Nessuna risposta.";
+
+/* Errors */
+"error.empty_host" = "Inserisci un host di destinazione.";
+"error.bound_unreachable" = "%1$@ non è raggiungibile tramite l'interfaccia %2$@. Quell'interfaccia probabilmente non instrada verso questa destinazione — scegli un'altra destinazione o imposta l'interfaccia su Automatico.";
+"error.resolve" = "Impossibile risolvere o raggiungere %@ (errore DNS o di routing). Controlla nome/IP.";
+"error.icmp_blocked" = "%@ non risponde all'ICMP (nemmeno i pacchetti piccoli passano). L'host potrebbe bloccare il ping o non essere raggiungibile.";
+
+/* Result */
+"result.title" = "MTU ottimale";
+"result.bytes" = "byte";
+"result.payload_header" = "Payload %lld + 28 header";
+"result.probes" = "Sonde";
+"result.tunnel_overhead" = "Overhead del tunnel";
+"result.set_with" = "Imposta con";
+"result.empty" = "Ancora nessuna misurazione. Scegli una destinazione e premi Calcola MTU.";
+"overhead.value" = "%1$lld B rispetto a 1500  —  %2$@";
+"proto.none" = "nessun overhead (il traffico potrebbe non passare nel tunnel)";
+"proto.pppoe" = "PPPoE/DSL (8 B)";
+"proto.gre" = "GRE / IP-in-IP";
+"proto.l2tp" = "L2TP / IPsec (transport)";
+"proto.wg4" = "WireGuard su IPv4 (60 B) o OpenVPN";
+"proto.wg6" = "WireGuard su IPv6 (80 B)";
+"proto.ipsec" = "IPsec ESP o tunnel annidati";
+"proto.unknown" = "overhead insolitamente alto — controlla il percorso";
+"rec.vpn" = "WireGuard:  MTU = %1$lld   (in [Interface])\naltrimenti: sudo ifconfig <utunX> mtu %2$lld";
+"rec.default" = "sudo networksetup -setMTU <servizio> %lld";
+
+/* Verdict */
+"verdict.ethernet" = "Standard Ethernet — throughput pieno, nessuna frammentazione.";
+"verdict.pppoe" = "Tipico di PPPoE/DSL. Ottimale per questa linea.";
+"verdict.auto.reduced" = "Ridotta — di solito un tunnel/VPN (es. WireGuard, IPsec, overhead PPPoE).";
+"verdict.auto.low" = "Bassa — tunnel annidati o una VPN conservativa.";
+"verdict.auto.verylow" = "Molto bassa — insolito, controlla il percorso.";
+"verdict.direct.reduced" = "Più bassa del previsto senza VPN — un tunnel o un limite sul percorso?";
+"verdict.direct.verylow" = "Molto bassa per una connessione diretta — controlla il percorso.";
+"verdict.vpn.high" = "Insolitamente alta per una VPN — il traffico passa davvero nel tunnel?";
+"verdict.vpn.normal" = "Normale per una VPN. Valore di tunnel ottimale per questa connessione.";
+"verdict.vpn.conservative" = "Tunnel conservativo — funziona, ma perde un po' di throughput.";
+"verdict.vpn.verylow" = "Molto bassa — tunnel annidati? Controlla il percorso.";
+
+/* Log */
+"log.title" = "Sonde";
+"log.mtu" = "MTU %lld";
+"log.payload" = "%lld B payload";
+"log.ok" = "risposta ricevuta";
+"log.toolong" = "interfaccia locale troppo piccola";
+"log.noreply" = "nessuna risposta / frammentazione necessaria";
+"log.error" = "errore (route/DNS/interfaccia)";

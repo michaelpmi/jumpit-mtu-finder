@@ -8,10 +8,30 @@ let kIPICMPOverhead = 28
 let kEthernetMTU = 1500
 
 enum ConnectionMode: String, CaseIterable, Identifiable {
-    case auto   = "Automatisch"
-    case direct = "Direkt (ohne VPN)"
-    case vpn    = "Über VPN"
+    case auto, direct, vpn
     var id: String { rawValue }
+    var labelKey: String { "mode.\(rawValue)" }
+    var hintKey: String  { "mode.\(rawValue).hint" }
+}
+
+/// Language-neutral progress state — the view renders the localized text.
+enum ProbeStatus: Equatable {
+    case ready
+    case starting(host: String)
+    case checking(host: String)
+    case testing(mtu: Int, payload: Int)
+    case pathTooSmall(mtu: Int)
+    case cancelled
+    case done(host: String, mtu: Int)
+    case noAnswer
+}
+
+/// Language-neutral error state — the view renders the localized text.
+enum ProbeError: Equatable {
+    case emptyHost
+    case boundUnreachable(host: String, iface: String)
+    case resolve(host: String)
+    case icmpBlocked(host: String)
 }
 
 enum PingOutcome {
@@ -46,7 +66,7 @@ struct ProbeLogEntry: Identifiable {
     let mtu: Int
     let payload: Int
     let fits: Bool
-    let note: String
+    let outcome: PingOutcome
 }
 
 struct InterfaceInfo: Identifiable, Hashable {
@@ -65,10 +85,10 @@ final class MTUProber: ObservableObject {
     @Published var mode: ConnectionMode = .auto
 
     @Published var isRunning: Bool = false
-    @Published var statusLine: String = "Bereit."
+    @Published var status: ProbeStatus = .ready
     @Published var currentMTU: Int? = nil          // MTU currently being probed
     @Published var resultMTU: Int? = nil           // final best MTU
-    @Published var errorText: String? = nil
+    @Published var error: ProbeError? = nil
     @Published var log: [ProbeLogEntry] = []
 
     @Published var localInterface: String = ""
@@ -109,17 +129,17 @@ final class MTUProber: ObservableObject {
         guard !isRunning else { return }
         let target = host.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !target.isEmpty else {
-            errorText = "Bitte einen Zielhost eingeben."
+            error = .emptyHost
             return
         }
         // reset state
         log.removeAll()
         resultMTU = nil
-        errorText = nil
+        error = nil
         currentMTU = nil
         probeCount = 0
         isRunning = true
-        statusLine = "Starte Messung gegen \(target) …"
+        status = .starting(host: target)
 
         // Upper bound = MTU of the interface the probes actually use. With DF set,
         // a payload above the local interface MTU can only return "Message too long",
@@ -148,28 +168,24 @@ final class MTUProber: ObservableObject {
         }
 
         // 0) reachability baseline with a tiny packet (retry on loss, like the probes)
-        statusLine = "Prüfe Erreichbarkeit von \(host) …"
+        status = .checking(host: host)
         var baseline = await probe(host: host, payload: 64)
         var bTries = 0
         while baseline == .noReply && bTries < 2 {
-            if Task.isCancelled { statusLine = "Abgebrochen."; return }
+            if Task.isCancelled { status = .cancelled; return }
             bTries += 1
             baseline = await probe(host: host, payload: 64)
         }
-        if Task.isCancelled { statusLine = "Abgebrochen."; return }
+        if Task.isCancelled { status = .cancelled; return }
         if baseline != .ok {
             if let b = boundInterface {
-                errorText = "\(host) ist über Interface \(b) nicht erreichbar. "
-                          + "Dieses Interface routet vermutlich nicht zu diesem Ziel — "
-                          + "anderes Ziel wählen oder Interface auf Automatisch stellen."
+                error = .boundUnreachable(host: host, iface: b)
             } else if baseline == .error {
-                errorText = "\(host) konnte nicht aufgelöst oder erreicht werden "
-                          + "(DNS- oder Routing-Fehler). Name/IP prüfen."
+                error = .resolve(host: host)
             } else {
-                errorText = "\(host) antwortet nicht auf ICMP (auch kleine Pakete kommen nicht durch). "
-                          + "Host blockiert evtl. Ping oder ist nicht erreichbar."
+                error = .icmpBlocked(host: host)
             }
-            statusLine = "Keine Antwort."
+            status = .noAnswer
             return
         }
 
@@ -180,21 +196,21 @@ final class MTUProber: ObservableObject {
         // ensure lo fits; if even 576 fails on the path, walk down toward baseline
         if await probeMTU(host: host, mtu: lo) == false {
             // path can't even do 576 — fall back to whatever the baseline payload implies
-            statusLine = "Pfad trägt nicht einmal MTU \(lo) — sehr kleine MTU."
+            status = .pathTooSmall(mtu: lo)
             lo = 64 + kIPICMPOverhead
         }
-        if Task.isCancelled { statusLine = "Abgebrochen."; return }
+        if Task.isCancelled { status = .cancelled; return }
 
         if await probeMTU(host: host, mtu: hi) {
             finish(best: hi, host: host)
             return
         }
-        if Task.isCancelled { statusLine = "Abgebrochen."; return }
+        if Task.isCancelled { status = .cancelled; return }
 
         // 2) binary search for the largest MTU that fits, in (lo, hi)
         var best = lo
         while lo <= hi {
-            if Task.isCancelled { statusLine = "Abgebrochen."; return }
+            if Task.isCancelled { status = .cancelled; return }
             let mid = (lo + hi) / 2
             if await probeMTU(host: host, mtu: mid) {
                 best = mid
@@ -208,14 +224,14 @@ final class MTUProber: ObservableObject {
 
     private func finish(best: Int, host: String) {
         resultMTU = best
-        statusLine = "Fertig — optimale MTU für \(host): \(best)."
+        status = .done(host: host, mtu: best)
     }
 
     /// Probe a full MTU value (converts to ICMP payload). Returns true if it fits.
     private func probeMTU(host: String, mtu: Int) async -> Bool {
         let payload = max(0, mtu - kIPICMPOverhead)
         currentMTU = mtu
-        statusLine = "Teste MTU \(mtu) (Payload \(payload) B) …"
+        status = .testing(mtu: mtu, payload: payload)
 
         var outcome = await probe(host: host, payload: payload)
         // retry only on no-reply (could be packet loss); "too long" is deterministic.
@@ -228,14 +244,7 @@ final class MTUProber: ObservableObject {
 
         let fits = (outcome == .ok)
         probeCount += 1
-        let note: String
-        switch outcome {
-        case .ok:      note = "Antwort erhalten"
-        case .tooLong: note = "lokale Schnittstelle zu klein"
-        case .noReply: note = "keine Antwort / fragmentierung nötig"
-        case .error:   note = "Fehler (Route/DNS/Interface)"
-        }
-        log.insert(ProbeLogEntry(mtu: mtu, payload: payload, fits: fits, note: note), at: 0)
+        log.insert(ProbeLogEntry(mtu: mtu, payload: payload, fits: fits, outcome: outcome), at: 0)
         return fits
     }
 

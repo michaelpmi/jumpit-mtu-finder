@@ -27,6 +27,11 @@ else
     echo "   (no icon/AppIcon.icns — skipping icon)"
 fi
 
+echo "==> Installing localizations"
+for d in localization/*.lproj; do
+    [ -d "$d" ] && cp -R "$d" "$APP/Contents/Resources/"
+done
+
 echo "==> Ad-hoc code signing"
 codesign --force --deep --sign - "$APP" 2>/dev/null || echo "   (codesign skipped)"
 

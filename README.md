@@ -21,6 +21,14 @@ MTU = ICMP-Payload + 28  (20 B IPv4-Header + 8 B ICMP-Header)
 Eine Erreichbarkeitsprüfung mit kleinem Paket läuft vorab; antwortet der Host
 gar nicht auf ICMP, wird das klar gemeldet statt „MTU nicht gefunden".
 
+## Sprachen
+
+Die App ist vollständig lokalisiert in **Deutsch, Englisch, Spanisch, Katalanisch,
+Französisch und Italienisch**. Standardmäßig folgt sie der macOS-Systemsprache; über
+das Globus-Menü oben rechts lässt sich die Sprache **live** umschalten (gemerkt über
+`@AppStorage`). Alle Texte liegen in `localization/<lang>.lproj/Localizable.strings`;
+die Engine (`MTUProber`) liefert sprachneutrale Zustände, die UI rendert sie über `L(...)`.
+
 ## Bauen
 
 Benötigt nur die Command Line Tools (`swiftc` + macOS SDK), kein Xcode-Projekt:

@@ -1,0 +1,85 @@
+/* Header */
+"app.tagline" = "Troba la mida de paquet més gran sense fragmentació";
+"lang.label" = "Idioma";
+
+/* Input */
+"input.target" = "Destinació";
+"input.host_placeholder" = "Host o IP (p. ex. passarel·la, 1.1.1.1, server.example.com)";
+"input.gateway" = "Passarel·la";
+"input.gateway_help" = "Utilitza la passarel·la predeterminada d'aquest Mac";
+"input.conn_type" = "Tipus de connexió";
+"mode.auto" = "Automàtic";
+"mode.direct" = "Directe (sense VPN)";
+"mode.vpn" = "Per VPN";
+"mode.auto.hint" = "Avalua la MTU mesurada automàticament segons els rangs habituals.";
+"mode.direct.hint" = "Sense túnel s'espera: 1500 (Ethernet) o 1492 (PPPoE/DSL).";
+"mode.vpn.hint" = "En un túnel una MTU reduïda és normal — mostra la sobrecàrrega i el protocol.";
+"input.jumbo" = "Provar trames jumbo (fins a MTU 9000)";
+"input.jumbo_help" = "Només útil en una LAN amb commutadors/NIC compatibles amb jumbo";
+"adv.title" = "Avançat: enllaç d'interfície";
+"adv.auto_routing" = "Automàtic (encaminament)";
+"adv.hint" = "Vincula els pings a una interfície fixa (ping -b) — p. ex. per mesurar específicament a través d'un túnel (utunX) en lloc de l'encaminament estàndard. La destinació ha de ser accessible per aquesta interfície.";
+"adv.refresh" = "Actualitza les interfícies";
+"iface.tunnel" = "Túnel";
+"info.bound_to" = "vinculat a %@";
+"info.local_mtu" = "MTU local %lld";
+"btn.cancel" = "Cancel·la";
+"btn.measure" = "Calcula la MTU";
+
+/* Status */
+"status.ready" = "A punt.";
+"status.starting" = "Iniciant la mesura cap a %@ …";
+"status.checking" = "Comprovant l'accessibilitat de %@ …";
+"status.testing" = "Provant MTU %1$lld (càrrega útil %2$lld B) …";
+"status.path_too_small" = "La ruta no admet ni tan sols MTU %lld — MTU molt petita.";
+"status.cancelled" = "Cancel·lat.";
+"status.done" = "Fet — MTU òptima per a %1$@: %2$lld.";
+"status.no_answer" = "Sense resposta.";
+
+/* Errors */
+"error.empty_host" = "Introdueix un host de destinació.";
+"error.bound_unreachable" = "%1$@ no és accessible per la interfície %2$@. Aquesta interfície probablement no encamina cap a aquesta destinació — tria una altra destinació o posa la interfície en Automàtic.";
+"error.resolve" = "No s'ha pogut resoldre ni assolir %@ (error de DNS o encaminament). Comprova el nom/IP.";
+"error.icmp_blocked" = "%@ no respon a ICMP (ni els paquets petits hi arriben). El host pot bloquejar el ping o no ser accessible.";
+
+/* Result */
+"result.title" = "MTU òptima";
+"result.bytes" = "bytes";
+"result.payload_header" = "Càrrega útil %lld + 28 capçalera";
+"result.probes" = "Sondejos";
+"result.tunnel_overhead" = "Sobrecàrrega del túnel";
+"result.set_with" = "Aplica amb";
+"result.empty" = "Encara no hi ha mesura. Tria una destinació i prem Calcula la MTU.";
+"overhead.value" = "%1$lld B respecte a 1500  —  %2$@";
+"proto.none" = "sense sobrecàrrega (potser el trànsit no va pel túnel)";
+"proto.pppoe" = "PPPoE/DSL (8 B)";
+"proto.gre" = "GRE / IP-in-IP";
+"proto.l2tp" = "L2TP / IPsec (transport)";
+"proto.wg4" = "WireGuard sobre IPv4 (60 B) o OpenVPN";
+"proto.wg6" = "WireGuard sobre IPv6 (80 B)";
+"proto.ipsec" = "IPsec ESP o túnels imbricats";
+"proto.unknown" = "sobrecàrrega inusualment alta — revisa la ruta";
+"rec.vpn" = "WireGuard:  MTU = %1$lld   (a [Interface])\naltrament:  sudo ifconfig <utunX> mtu %2$lld";
+"rec.default" = "sudo networksetup -setMTU <servei> %lld";
+
+/* Verdict */
+"verdict.ethernet" = "Estàndard Ethernet — rendiment complet, sense fragmentació.";
+"verdict.pppoe" = "Típic de PPPoE/DSL. Òptim per a aquesta línia.";
+"verdict.auto.reduced" = "Reduïda — normalment un túnel/VPN (p. ex. WireGuard, IPsec, sobrecàrrega PPPoE).";
+"verdict.auto.low" = "Baixa — túnels imbricats o una VPN conservadora.";
+"verdict.auto.verylow" = "Molt baixa — inusual, revisa la ruta.";
+"verdict.direct.reduced" = "Més baixa del que s'espera sense VPN — un túnel o limitació a la ruta?";
+"verdict.direct.verylow" = "Molt baixa per a una connexió directa — revisa la ruta.";
+"verdict.vpn.high" = "Inusualment alta per a VPN — el trànsit va realment pel túnel?";
+"verdict.vpn.normal" = "Normal per a VPN. Valor de túnel òptim per a aquesta connexió.";
+"verdict.vpn.conservative" = "Túnel conservador — funciona, però perd una mica de rendiment.";
+"verdict.vpn.verylow" = "Molt baixa — túnels imbricats? Revisa la ruta.";
+
+/* Log */
+"log.title" = "Sondejos";
+"log.mtu" = "MTU %lld";
+"log.payload" = "%lld B de càrrega";
+"log.ok" = "resposta rebuda";
+"log.toolong" = "interfície local massa petita";
+"log.noreply" = "sense resposta / cal fragmentació";
+"log.error" = "error (ruta/DNS/interfície)";
